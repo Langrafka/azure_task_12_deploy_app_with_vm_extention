@@ -12,7 +12,8 @@ $sshKeyPublicKey = Get-Content "~/.ssh/id_rsa.pub"
 $publicIpAddressName = "linuxboxpip"
 $vmName = "matebox"
 $vmImage = "Ubuntu2204"
-$vmSize = "Standard_B1s"
+# !!! ВИПРАВЛЕНО 1: ЗМІНА РОЗМІРУ ВМ, оскільки Standard_B1s недоступний у uksouth !!!
+$vmSize = "Standard_B2s"
 $dnsLabel = "matetask" + (Get-Random -Count 1)
 
 # !!! КРИТИЧНО ВАЖЛИВО: ЗАМІНИТИ СЮДИ ВАШ GITHUB USERNAME !!!
@@ -34,7 +35,8 @@ Write-Host "Creating SSH Key $sshKeyName ..."
 New-AzSshKey -Name $sshKeyName -ResourceGroupName $resourceGroupName -PublicKey $sshKeyPublicKey
 
 Write-Host "Creating Public IP Address $publicIpAddressName with DNS label $dnsLabel ..."
-New-AzPublicIpAddress -Name $publicIpAddressName -ResourceGroupName $resourceGroupName -Location $location -Sku Basic -AllocationMethod Dynamic -DomainNameLabel $dnsLabel
+# !!! ВИПРАВЛЕНО 2: ЗМІНА SKU на Standard і AllocationMethod на Static через ліміт Basic SKU !!!
+New-AzPublicIpAddress -Name $publicIpAddressName -ResourceGroupName $resourceGroupName -Location $location -Sku Standard -AllocationMethod Static -DomainNameLabel $dnsLabel
 
 Write-Host "Creating Virtual Machine $vmName ..."
 New-AzVm `
@@ -68,7 +70,8 @@ $Params = @{
     }
 }
 
-Set-AzVMExtension @Params -Force
+# !!! ВИПРАВЛЕНО 3: Додано -ForceRerun, щоб уникнути помилки синтаксису !!!
+Set-AzVMExtension @Params -Force -ForceRerun (Get-Date).Ticks.ToString()
 
 Write-Host "Custom Script Extension deployment initiated. Check http://$dnsLabel.$location.cloudapp.azure.com:8080 once deployment completes."
 # ↑↑↑ Кінець коду розширення ↑↑↑
