@@ -81,9 +81,8 @@ $Params = @{
     Publisher          = 'Microsoft.Azure.Extensions'
     ExtensionType      = 'CustomScript'
     TypeHandlerVersion = '2.1'
-    # !!! ОНОВЛЕНО: Переносимо Force та ForceRerun у хеш-таблицю
-    Force              = $true
-    ForceRerun         = $forceRerunValue
+    # !!! ВИДАЛЕНО: Параметр 'Force' приводить до помилки
+    ForceRerun         = $forceRerunValue # Залишаємо ForceRerun, щоб примусово запустити скрипт
     # Використовуємо ProtectedSettings, щоб URL не був видно у властивостях VM
     ProtectedSettings  = @{
         fileUris = @($fileUri)
