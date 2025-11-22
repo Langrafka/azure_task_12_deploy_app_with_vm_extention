@@ -12,8 +12,8 @@ $sshKeyPublicKey = Get-Content "~/.ssh/id_rsa.pub"
 $publicIpAddressName = "linuxboxpip"
 $vmName = "matebox"
 $vmImage = "Ubuntu2204"
-# !!! ВИПРАВЛЕНО 1: ЗМІНА РОЗМІРУ ВМ, оскільки Standard_B1s недоступний у uksouth !!!
-$vmSize = "Standard_B2s"
+# !!! ВИПРАВЛЕНО 1: ЗМІНА РОЗМІРУ ВМ на Standard_D2s_v3 через недоступність Standard_B2s у uksouth !!!
+$vmSize = "Standard_D2s_v3"
 $dnsLabel = "matetask" + (Get-Random -Count 1)
 
 # !!! КРИТИЧНО ВАЖЛИВО: ЗАМІНИТИ СЮДИ ВАШ GITHUB USERNAME !!!
@@ -35,10 +35,11 @@ Write-Host "Creating SSH Key $sshKeyName ..."
 New-AzSshKey -Name $sshKeyName -ResourceGroupName $resourceGroupName -PublicKey $sshKeyPublicKey
 
 Write-Host "Creating Public IP Address $publicIpAddressName with DNS label $dnsLabel ..."
-# !!! ВИПРАВЛЕНО 2: ЗМІНА SKU на Standard і AllocationMethod на Static через ліміт Basic SKU !!!
+# ВИПРАВЛЕНО: ЗМІНА SKU на Standard і AllocationMethod на Static
 New-AzPublicIpAddress -Name $publicIpAddressName -ResourceGroupName $resourceGroupName -Location $location -Sku Standard -AllocationMethod Static -DomainNameLabel $dnsLabel
 
 Write-Host "Creating Virtual Machine $vmName ..."
+# Зверніть увагу, що тут з'явилося запитання про облікові дані (User: yaroslavalangraf), його потрібно буде ввести вручну
 New-AzVm `
 -ResourceGroupName $resourceGroupName `
 -Name $vmName `
@@ -70,8 +71,8 @@ $Params = @{
     }
 }
 
-# !!! ВИПРАВЛЕНО 3: Додано -ForceRerun, щоб уникнути помилки синтаксису !!!
-Set-AzVMExtension @Params -Force -ForceRerun (Get-Date).Ticks.ToString()
+# !!! ВИПРАВЛЕНО 2: Виправлено синтаксис ForceRerun для коректної передачі аргументу.
+Set-AzVMExtension @Params -Force -ForceRerun $((Get-Date).Ticks.ToString())
 
 Write-Host "Custom Script Extension deployment initiated. Check http://$dnsLabel.$location.cloudapp.azure.com:8080 once deployment completes."
 # ↑↑↑ Кінець коду розширення ↑↑↑
