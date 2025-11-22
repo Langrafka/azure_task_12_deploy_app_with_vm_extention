@@ -71,8 +71,7 @@ Write-Host "Deploying Custom Script Extension to install web app..."
 # URI до скрипту встановлення (використовуємо ваш форк)
 $fileUri = "https://raw.githubusercontent.com/$githubUsername/azure_task_12_deploy_app_with_vm_extention/main/install-app.sh"
 
-# 🛠️ ВИПРАВЛЕННЯ СИНТАКСИСУ: Створюємо динамічний рядок для ForceRerun окремо
-# Це гарантує, що PowerShell коректно обчислить рядок перед викликом командлета.
+# 🛠️ ФІНАЛЬНЕ ВИПРАВЛЕННЯ: Створюємо динамічний рядок для ForceRerun
 $forceRerunValue = (Get-Date).Ticks.ToString()
 
 $Params = @{
@@ -82,6 +81,9 @@ $Params = @{
     Publisher          = 'Microsoft.Azure.Extensions'
     ExtensionType      = 'CustomScript'
     TypeHandlerVersion = '2.1'
+    # !!! ОНОВЛЕНО: Переносимо Force та ForceRerun у хеш-таблицю
+    Force              = $true
+    ForceRerun         = $forceRerunValue
     # Використовуємо ProtectedSettings, щоб URL не був видно у властивостях VM
     ProtectedSettings  = @{
         fileUris = @($fileUri)
@@ -89,7 +91,7 @@ $Params = @{
     }
 }
 
-# Тепер передаємо створене значення $forceRerunValue.
-Set-AzVMExtension @Params -Force -ForceRerun $forceRerunValue
+# Тепер передаємо ВСІ параметри через хеш-таблицю.
+Set-AzVMExtension @Params
 
 Write-Host "Custom Script Extension deployment initiated. Check http://$dnsLabel.$location.cloudapp.azure.com:8080 once deployment completes."
