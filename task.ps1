@@ -13,13 +13,12 @@ $subnetAddressPrefix = "10.0.0.0/24"
 $sshKeyName = "linuxboxsshkey"
 
 # Зчитуємо відкритий SSH-ключ. Припускаємо, що він знаходиться у стандартному місці.
-# ПЕРЕКОНАЙТЕСЯ, що файл "~/.ssh/id_rsa.pub" ІСНУЄ.
 $sshKeyPublicKey = Get-Content "~/.ssh/id_rsa.pub"
 $publicIpAddressName = "linuxboxpip"
 $vmName = "matebox"
 $vmImage = "Ubuntu2204"
 
-# Розмір VM залишаємо Standard_D2s_v3 (оскільки він спрацював у Канаді).
+# Розмір VM залишаємо Standard_D2s_v3. Сподіваємося, що він доступний у canadacentral.
 $vmSize = "Standard_D2s_v3"
 $dnsLabel = "matetask" + (Get-Random -Count 1)
 
@@ -31,7 +30,7 @@ $githubUsername = "Langrafka"
 # ==============================================================================
 
 Write-Host "Creating a resource group $resourceGroupName in $location..."
-# Додайте -Force, щоб уникнути запитань про перезапис і пришвидшити запуск
+# Додано -Force для перезапису без підтвердження
 New-AzResourceGroup -Name $resourceGroupName -Location $location -Force
 
 Write-Host "Creating a network security group $networkSecurityGroupName ..."
@@ -44,7 +43,8 @@ $subnet = New-AzVirtualNetworkSubnetConfig -Name $subnetName -AddressPrefix $sub
 New-AzVirtualNetwork -Name $virtualNetworkName -ResourceGroupName $resourceGroupName -Location $location -AddressPrefix $vnetAddressPrefix -Subnet $subnet -Force
 
 Write-Host "Creating SSH Key $sshKeyName ..."
-New-AzSshKey -Name $sshKeyName -ResourceGroupName $resourceGroupName -PublicKey $sshKeyPublicKey -Force
+# !!! ВИПРАВЛЕННЯ: ВИДАЛЕНО НЕІСНУЮЧИЙ ПАРАМЕТР -Force !!!
+New-AzSshKey -Name $sshKeyName -ResourceGroupName $resourceGroupName -PublicKey $sshKeyPublicKey
 
 Write-Host "Creating Public IP Address $publicIpAddressName with DNS label $dnsLabel ..."
 New-AzPublicIpAddress -Name $publicIpAddressName -ResourceGroupName $resourceGroupName -Location $location -Sku Standard -AllocationMethod Static -DomainNameLabel $dnsLabel -Force
