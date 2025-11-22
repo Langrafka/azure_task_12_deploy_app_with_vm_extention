@@ -1,4 +1,10 @@
-$location = "uksouth"
+# ==============================================================================
+# КОНФІГУРАЦІЯ
+# ==============================================================================
+
+# !!! КРИТИЧНЕ ВИПРАВЛЕННЯ 1: ЗМІНА ЛОКАЦІЇ НА CANADACENTRAL (Канада) !!!
+# Це вирішує проблему недоступності VM SKU у uksouth.
+$location = "canadacentral" 
 $resourceGroupName = "mate-azure-task-12"
 $networkSecurityGroupName = "defaultnsg"
 $virtualNetworkName = "vnet"
@@ -12,14 +18,19 @@ $sshKeyPublicKey = Get-Content "~/.ssh/id_rsa.pub"
 $publicIpAddressName = "linuxboxpip"
 $vmName = "matebox"
 $vmImage = "Ubuntu2204"
-# !!! ВИПРАВЛЕНО 1: ЗМІНА РОЗМІРУ ВМ на Standard_D2s_v3 через недоступність Standard_B2s у uksouth !!!
+
+# Розмір VM залишаємо Standard_D2s_v3. Сподіваємося, що він доступний у canadacentral.
 $vmSize = "Standard_D2s_v3"
 $dnsLabel = "matetask" + (Get-Random -Count 1)
 
 # !!! КРИТИЧНО ВАЖЛИВО: ЗАМІНИТИ СЮДИ ВАШ GITHUB USERNAME !!!
 $githubUsername = "Langrafka"
 
-Write-Host "Creating a resource group $resourceGroupName ..."
+# ==============================================================================
+# СТВОРЕННЯ РЕСУРСІВ AZURE
+# ==============================================================================
+
+Write-Host "Creating a resource group $resourceGroupName in $location..."
 New-AzResourceGroup -Name $resourceGroupName -Location $location
 
 Write-Host "Creating a network security group $networkSecurityGroupName ..."
@@ -35,11 +46,10 @@ Write-Host "Creating SSH Key $sshKeyName ..."
 New-AzSshKey -Name $sshKeyName -ResourceGroupName $resourceGroupName -PublicKey $sshKeyPublicKey
 
 Write-Host "Creating Public IP Address $publicIpAddressName with DNS label $dnsLabel ..."
-# ВИПРАВЛЕНО: ЗМІНА SKU на Standard і AllocationMethod на Static
 New-AzPublicIpAddress -Name $publicIpAddressName -ResourceGroupName $resourceGroupName -Location $location -Sku Standard -AllocationMethod Static -DomainNameLabel $dnsLabel
 
 Write-Host "Creating Virtual Machine $vmName ..."
-# Зверніть увагу, що тут з'явилося запитання про облікові дані (User: yaroslavalangraf), його потрібно буде ввести вручну
+# Зверніть увагу, що тут з'явиться запитання про облікові дані (User), його потрібно буде ввести вручну
 New-AzVm `
 -ResourceGroupName $resourceGroupName `
 -Name $vmName `
@@ -51,7 +61,10 @@ New-AzVm `
 -SecurityGroupName $networkSecurityGroupName `
 -SshKeyName $sshKeyName  -PublicIpAddressName $publicIpAddressName
 
-# ↓↓↓ Код для розгортання Custom Script Extension ↓↓↓
+# ==============================================================================
+# РОЗГОРТАННЯ CUSTOM SCRIPT EXTENSION
+# ==============================================================================
+
 Write-Host "Deploying Custom Script Extension to install web app..."
 
 # URI до скрипту встановлення (використовуємо ваш форк)
@@ -71,8 +84,8 @@ $Params = @{
     }
 }
 
-# !!! ВИПРАВЛЕНО 2: Виправлено синтаксис ForceRerun для коректної передачі аргументу.
+# !!! КРИТИЧНЕ ВИПРАВЛЕННЯ 2: Виправлено синтаксис ForceRerun !!!
+# Використовуємо $((Get-Date).Ticks.ToString()) для створення унікального рядка.
 Set-AzVMExtension @Params -Force -ForceRerun $((Get-Date).Ticks.ToString())
 
 Write-Host "Custom Script Extension deployment initiated. Check http://$dnsLabel.$location.cloudapp.azure.com:8080 once deployment completes."
-# ↑↑↑ Кінець коду розширення ↑↑↑
